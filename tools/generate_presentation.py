@@ -23,8 +23,6 @@ Install dependencies:
 
 import argparse
 import os
-import sys
-from pathlib import Path
 
 from pptx import Presentation
 from pptx.util import Inches, Pt
