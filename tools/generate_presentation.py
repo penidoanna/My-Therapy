@@ -24,13 +24,12 @@ with a light gray background and still produces the PPTX.
 import argparse
 import os
 import sys
-from pathlib import Path
 
 try:
     from pptx import Presentation
     from pptx.util import Inches, Pt
     from pptx.dml.color import RGBColor
-    from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+    from pptx.enum.text import PP_ALIGN
     from pptx.enum.shapes import MSO_SHAPE
 except ImportError:
     print("Error: python-pptx is required. Install with: pip install python-pptx")
@@ -46,6 +45,9 @@ except ImportError:
 # Slide dimensions (16:9 widescreen)
 SLIDE_WIDTH = Inches(13.333)
 SLIDE_HEIGHT = Inches(7.5)
+
+# Image processing
+DEFAULT_DPI = 96  # Standard screen DPI for image size calculations
 
 # Colors
 LIGHT_PANEL_COLOR = RGBColor(0xF5, 0xF6, 0xF7)  # #F5F6F7
@@ -77,13 +79,13 @@ def add_image_slide(prs, image_path, slide_num):
             slide_width_inches = 13.333
             slide_height_inches = 7.5
 
-            scale_w = slide_width_inches / (img_width / 96)  # Assume 96 DPI
-            scale_h = slide_height_inches / (img_height / 96)
+            scale_w = slide_width_inches / (img_width / DEFAULT_DPI)
+            scale_h = slide_height_inches / (img_height / DEFAULT_DPI)
             scale = min(scale_w, scale_h)
 
             # Calculate final dimensions
-            final_width = (img_width / 96) * scale
-            final_height = (img_height / 96) * scale
+            final_width = (img_width / DEFAULT_DPI) * scale
+            final_height = (img_height / DEFAULT_DPI) * scale
 
             # Calculate position to center
             left = (slide_width_inches - final_width) / 2
