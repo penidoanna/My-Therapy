@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <head>
+        <meta charset="UTF-8">
+        <title>Manage Payment Method</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}" />
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}" />
+        <script src="https://js.stripe.com/v3/"></script>
+        <style>
+            .StripeElement {
+                box-sizing: border-box;
+                height: 40px;
+                padding: 10px 12px;
+                border: 1px solid #ced4da;
+                border-radius: 0.25rem;
+                background-color: white;
+                box-shadow: 0 1px 3px 0 #e6ebf1;
+                -webkit-transition: box-shadow 150ms ease;
+                transition: box-shadow 150ms ease;
+            }
+            .StripeElement--focus {
+                box-shadow: 0 1px 3px 0 #cfd7df;
+            }
+            .StripeElement--invalid {
+                border-color: #fa755a;
+            }
+            .StripeElement--webkit-autofill {
+                background-color: #fefde5 !important;
+            }
+            #card-errors {
+                color: #fa755a;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="container my-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card shadow-lg border-0">
+                        <div class="card-body p-4 p-md-5">
+                            <h2 class="card-title fw-bold text-primary mb-4">Secure Your Payment Method</h2>
+                            <p class="text-muted mb-4">
+                                Your card details are securely saved with Stripe for future session charges.
+                                You will not be charged today.
+                            </p>
+
+                            <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}">
+                                Payment method saved successfully!
+                            </div>
+                            <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}">
+                                An error occurred.
+                            </div>
+
+                            <form id="payment-form" th:action="@{/patient/payment-method/save}" method="post">
+                                <div class="mb-3">
+                                    <label for="card-element" class="form-label fw-semibold">Credit or debit card</label>
+                                    <div id="card-element" class="StripeElement">
+                                        <!-- A Stripe Element will be inserted here. -->
+                                    </div>
+                                </div>
+
+                                <!-- Used to display form errors. -->
+                                <div id="card-errors" role="alert"></div>
+
+                                <button id="submit-button" class="btn btn-primary w-100 mt-4" type="submit">
+                                    <i class="fa-solid fa-lock me-2"></i> Save Payment Method
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            const stripe = Stripe('REPLACE WITH STRIPE_PUBLIC_KEY'); //**********
+            const elements = stripe.elements();
+            const card = elements.create('card');
+            card.mount('#card-element');
+
+            const form = document.getElementById('payment-form');
+            const cardErrors = document.getElementById('card-errors');
+            const clientSecret = /*[[${clientSecret}]]*/ 'test_client_secret';
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                document.getElementById('submit-button').disabled = true;
+
+                const {setupIntent, error} = await stripe.confirmCardSetup(
+                        clientSecret, {
+                            payment_method: {
+                                card: card,
+                                billing_details: {
+                                }
+                            }
+                        }
+                );
+
+                if (error) {
+                    cardErrors.textContent = error.message;
+                    document.getElementById('submit-button').disabled = false;
+                } else {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.setAttribute('type', 'hidden');
+                    hiddenInput.setAttribute('name', 'paymentMethodId');
+                    hiddenInput.setAttribute('value', setupIntent.payment_method);
+                    form.appendChild(hiddenInput);
+
+                    form.submit();
+                }
+            });
+            /*]]>*/
+        </script>
+    </body>
+</html>

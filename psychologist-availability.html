@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Manage Availability – My Therapy</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}"/>
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}"/>
+        <style>
+            .context-menu {
+                position: absolute;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                padding: 8px 0;
+                z-index: 1000;
+                min-width: 180px;
+                display: none;
+            }
+            .context-menu-item {
+                padding: 8px 16px;
+                cursor: pointer;
+                border: none;
+                background: none;
+                width: 100%;
+                text-align: left;
+            }
+            .context-menu-item:hover {
+                background-color: #f8f9fa;
+            }
+            .grid-cell {
+                position: relative;
+                cursor: pointer;
+            }
+            .grid-cell.available {
+                background-color: #c8f7dc !important;
+            }
+            .grid-cell.break {
+                background-color: #ffeaa7 !important;
+            }
+            .grid-cell.appointment {
+                background-color: #a29bfe !important;
+                color: white;
+            }
+            .grid-cell:hover {
+                opacity: 0.8;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Flash Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="container">
+            <!-- Header with Schedule Appointment Button -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h4 fw-bold mb-1">Set Weekly Availability</h1>
+                    <p class="text-muted mb-0">Click on the slots below to toggle availability. Your schedule will be saved and applied every week.</p>
+                </div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleAppointmentModal">
+                    <i class="fa-solid fa-calendar-plus me-2"></i>Schedule Appointment
+                </button>
+            </div>
+
+            <form id="availability-form" method="post" th:action="@{/psychologists/{id}/availability/save(id=${psychologist.id})}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered text-center align-middle" id="availability-grid">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th class="grid-header">Mon</th>
+                                <th class="grid-header">Tue</th>
+                                <th class="grid-header">Wed</th>
+                                <th class="grid-header">Thu</th>
+                                <th class="grid-header">Fri</th>
+                                <th class="grid-header">Sat</th>
+                                <th class="grid-header">Sun</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grid-body">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between mb-5">
+                    <a th:href="@{/psychologist/dashboard}" class="btn btn-outline-secondary">Back to Dashboard</a>
+                    <button type="submit" class="btn btn-success">Save Availability</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Schedule Appointment Modal -->
+        <div class="modal fade" id="scheduleAppointmentModal" tabindex="-1" aria-labelledby="scheduleAppointmentModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="scheduleAppointmentModalLabel">
+                            <i class="fa-solid fa-calendar-plus me-2"></i>Schedule Appointment
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="post" th:action="@{/psychologist/appointments/create}" onsubmit="return validateAppointmentForm()">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="patientId" class="form-label">Select Patient</label>
+                                <select class="form-select" id="patientId" name="patientId" onchange="handlePatientSelection(this)">
+                                    <option value="">-- Choose a patient --</option>
+                                    <option value="add">+ Add a new patient</option>
+                                    <option th:each="patient : ${patients}" 
+                                            th:value="${patient.id}" 
+                                            th:text="${patient.fName + ' ' + patient.lName}">
+                                    </option>
+                                </select>
+                                <div class="form-text">Only your assigned patients are shown</div>
+                                <div id="patientError" class="text-danger small mt-1" style="display: none;">
+                                    Please select a patient or add a new one.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="appointmentDate" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="appointmentDate" name="appointmentDate" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="appointmentTime" class="form-label">Time</label>
+                                <select class="form-select" id="appointmentTime" name="appointmentTime" required>
+                                    <option value="">-- Select time --</option>
+                                    <option value="08:00">08:00 AM</option>
+                                    <option value="09:00">09:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="13:00">01:00 PM</option>
+                                    <option value="14:00">02:00 PM</option>
+                                    <option value="15:00">03:00 PM</option>
+                                    <option value="16:00">04:00 PM</option>
+                                    <option value="17:00">05:00 PM</option>
+                                    <option value="18:00">06:00 PM</option>
+                                    <option value="19:00">07:00 PM</option>
+                                    <option value="20:00">08:00 PM</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="duration" class="form-label">Duration</label>
+                                <select class="form-select" id="duration" name="durationMinutes">
+                                    <option value="30">30 minutes</option>
+                                    <option value="60" selected>60 minutes (1 hour)</option>
+                                    <option value="90">90 minutes (1.5 hours)</option>
+                                    <option value="120">120 minutes (2 hours)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Notes (optional)</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                          placeholder="Add any notes about this appointment..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-calendar-check me-2"></i>Schedule Appointment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Modal -->
+        <div class="modal fade" id="addPatientModal" tabindex="-1" aria-labelledby="addPatientModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addPatientModalLabel">
+                            <i class="fa-solid fa-user-plus me-2"></i>Add New Patient
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div id="addPatientForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="newPatientFirstName" class="form-label">First Name *</label>
+                                        <input type="text" class="form-control" id="newPatientFirstName">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="newPatientLastName" class="form-label">Last Name *</label>
+                                        <input type="text" class="form-control" id="newPatientLastName">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="newPatientEmail" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="newPatientEmail">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="newPatientPhone" class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="newPatientPhone">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="newPatientCountry" class="form-label">Country</label>
+                                <input type="text" class="form-control" id="newPatientCountry">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="newPatientNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="newPatientNotes" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success" onclick="submitPatientForm()">
+                            <i class="fa-solid fa-user-plus me-2"></i>Add Patient
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Context Menu -->
+        <div id="contextMenu" class="context-menu">
+            <button class="context-menu-item" onclick="addAppointment()">
+                <i class="fa-solid fa-calendar-plus me-2"></i>Add Appointment
+            </button>
+            <button class="context-menu-item" onclick="addBreak()">
+                <i class="fa-solid fa-pause me-2"></i>Add Break
+            </button>
+            <button class="context-menu-item" onclick="addAvailableSlot()">
+                <i class="fa-solid fa-check me-2"></i>Add Available Slot
+            </button>
+
+            <!-- Cancel Appointment option (initially hidden) -->
+            <button class="context-menu-item text-danger" id="cancelAppointmentOption" style="display: none;" onclick="cancelAppointment()">
+                <i class="fa-solid fa-calendar-xmark me-2"></i>Cancel Appointment
+            </button>
+        </div>
+
+        <script th:inline="javascript">
+
+            let selectedCell = null;
+            // Store appointment data by day and time for easy lookup
+            const appointmentsData = {};
+
+            function getAppointmentKey(day, time) {
+                return `${day}_${time}`;
+            }
+
+            window.addEventListener("DOMContentLoaded", function () {
+                const hours = Array.from({length: 13}, (_, i) => i + 8);
+                const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+                const gridBody = document.getElementById("grid-body");
+
+                // Load existing availability slots
+                const existingSlots = /*[[${slots}]]*/ [];
+
+                // Load existing appointments
+                const existingAppointments = /*[[${appointments}]]*/ [];
+                console.log("Loaded slots:", existingSlots);
+                console.log("Loaded appointments:", existingAppointments);
+
+                // Build the grid
+                hours.forEach(hour => {
+                    const row = document.createElement("tr");
+                    const timeCol = document.createElement("td");
+                    timeCol.classList.add("time-col");
+                    timeCol.textContent = `${hour.toString().padStart(2, '0')}:00`;
+                    row.appendChild(timeCol);
+
+                    days.forEach(day => {
+                        const cell = document.createElement("td");
+                        cell.className = "grid-cell";
+                        cell.dataset.day = day;
+                        cell.dataset.time = `${hour.toString().padStart(2, '0')}:00`;
+
+                        // Check existing slots and set initial state
+                        const cellTimeStr = `${hour.toString().padStart(2, '0')}:00:00`;
+                        const existingSlot = existingSlots.find(slot =>
+                            slot.dayOfWeek === day && slot.startTime === cellTimeStr
+                        );
+
+                        if (existingSlot) {
+                            cell.classList.add("available");
+                        }
+
+                        // Check if there's an appointment at this time
+                        const appointment = existingAppointments.find(appt => {
+                            if (!appt.dateHour)
+                                return false;
+
+                            // Parse the appointment date/time
+                            const apptDate = new Date(appt.dateHour);
+                            const apptDay = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'][apptDate.getDay()];
+                            const apptHour = apptDate.getHours();
+
+                            // Check if this appointment matches this cell
+                            return apptDay === day && apptHour === hour;
+                        });
+
+                        if (appointment) {
+                            // Remove available class and add appointment class
+                            cell.classList.remove("available");
+                            cell.classList.add("appointment");
+
+                            // Store appointment data for this cell
+                            const appointmentKey = getAppointmentKey(day, `${hour.toString().padStart(2, '0')}:00`);
+                            appointmentsData[appointmentKey] = {
+                                id: appointment.id,
+                                patientName: appointment.patient ? `${appointment.patient.fName} ${appointment.patient.lName}` : 'Unknown',
+                                date: new Date(appointment.dateHour).toLocaleDateString(),
+                                time: new Date(appointment.dateHour).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+                            };
+
+                            // Add patient name to the cell
+                            if (appointment.patient) {
+                                cell.textContent = appointment.patient.fName;
+                                cell.title = `${appointment.patient.fName} ${appointment.patient.lName}`;
+                            }
+                        }
+
+                        // Right-click context menu
+                        cell.addEventListener('contextmenu', function (e) {
+                            e.preventDefault();
+                            selectedCell = cell;
+                            showContextMenu(e.pageX, e.pageY);
+                            return false;
+                        });
+
+                        // Left click to toggle available (only if not an appointment)
+                        cell.addEventListener('click', function () {
+                            if (!this.classList.contains("appointment")) {
+                                this.classList.toggle("available");
+                                this.classList.remove("break");
+                            }
+                        });
+                        row.appendChild(cell);
+                    });
+                    gridBody.appendChild(row);
+                });
+
+                // Hide context menu when clicking elsewhere
+                document.addEventListener('click', hideContextMenu);
+
+                // Set minimum date to today for appointment date picker
+                const dateInput = document.getElementById("appointmentDate");
+                if (dateInput) {
+                    const today = new Date().toISOString().split('T')[0];
+                    dateInput.setAttribute('min', today);
+                }
+            });
+
+            function showContextMenu(x, y) {
+                const contextMenu = document.getElementById('contextMenu');
+                const cancelOption = document.getElementById('cancelAppointmentOption');
+
+                // Show/hide options based on cell state
+                if (selectedCell && selectedCell.classList.contains('appointment')) {
+                    // If cell has appointment, ONLY show cancel option
+                    cancelOption.style.display = 'block';
+                    contextMenu.querySelectorAll('.context-menu-item:not(#cancelAppointmentOption)').forEach(item => {
+                        item.style.display = 'none';
+                    });
+                } else {
+                    // If cell doesn't have appointment, show normal options, hide cancel
+                    cancelOption.style.display = 'none';
+                    contextMenu.querySelectorAll('.context-menu-item:not(#cancelAppointmentOption)').forEach(item => {
+                        item.style.display = 'block';
+                    });
+                }
+
+                contextMenu.style.display = 'block';
+
+                // Position the menu near the cursor, but ensure it stays within viewport
+                const menuWidth = 200;
+                const menuHeight = selectedCell && selectedCell.classList.contains('appointment') ? 60 : 160;
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+
+                let posX = x;
+                let posY = y;
+
+                // Adjust if too close to right edge
+                if (x + menuWidth > viewportWidth) {
+                    posX = viewportWidth - menuWidth - 10;
+                }
+
+                // Adjust if too close to bottom edge
+                if (y + menuHeight > viewportHeight) {
+                    posY = viewportHeight - menuHeight - 10;
+                }
+
+                contextMenu.style.left = posX + 'px';
+                contextMenu.style.top = posY + 'px';
+            }
+
+            function hideContextMenu() {
+                document.getElementById('contextMenu').style.display = 'none';
+            }
+
+            function addAppointment() {
+                if (selectedCell) {
+                    // Pre-fill the appointment modal with the selected day and time
+                    const selectedDay = selectedCell.dataset.day;
+                    const selectedTime = selectedCell.dataset.time;
+                    // Calculate the next occurrence of the selected day
+                    const nextDate = getNextDate(selectedDay);
+                    // Set the date and time in the modal
+                    const dateInput = document.getElementById('appointmentDate');
+                    const timeSelect = document.getElementById('appointmentTime');
+                    if (dateInput && timeSelect) {
+                        dateInput.value = nextDate;
+                        timeSelect.value = selectedTime;
+                    }
+
+                    // Show the modal
+                    const modalElement = document.getElementById('scheduleAppointmentModal');
+                    if (modalElement) {
+                        const modal = new bootstrap.Modal(modalElement);
+                        modal.show();
+                    } else {
+                        console.error('Schedule appointment modal not found');
+                    }
+
+                    // Mark the cell as having an appointment (optional visual feedback)
+                    selectedCell.classList.remove("available", "break");
+                    selectedCell.classList.add("appointment");
+                }
+                hideContextMenu();
+            }
+
+            function addBreak() {
+                if (selectedCell) {
+                    selectedCell.classList.remove("available", "appointment");
+                    selectedCell.classList.add("break");
+                }
+                hideContextMenu();
+            }
+
+            function validateAppointmentForm() {
+                console.log('=== validateAppointmentForm called ===');
+                const patientSelect = document.getElementById('patientId');
+                const patientError = document.getElementById('patientError');
+                const dateInput = document.getElementById('appointmentDate');
+                const timeSelect = document.getElementById('appointmentTime');
+                console.log('Patient selected:', patientSelect?.value);
+                console.log('Date:', dateInput?.value);
+                console.log('Time:', timeSelect?.value);
+                if (!patientSelect || !patientSelect.value || patientSelect.value === 'add') {
+                    if (patientError) {
+                        patientError.style.display = 'block';
+                        console.log('Validation failed: No patient selected');
+                    }
+                    if (patientSelect)
+                        patientSelect.focus();
+                    return false;
+                }
+
+                if (patientError)
+                    patientError.style.display = 'none';
+                console.log('Validation passed');
+                return true;
+            }
+
+            function addAvailableSlot() {
+                if (selectedCell) {
+                    selectedCell.classList.remove("break", "appointment");
+                    selectedCell.classList.add("available");
+                }
+                hideContextMenu();
+            }
+
+            function handlePatientSelection(select) {
+                const patientError = document.getElementById('patientError');
+                patientError.style.display = 'none';
+                if (select.value === 'add') {
+                    // Show the add patient modal
+                    const addPatientModal = new bootstrap.Modal(document.getElementById('addPatientModal'));
+                    addPatientModal.show();
+                    // Reset the dropdown to the first option
+                    select.selectedIndex = 0;
+                }
+            }
+
+            // Handle add patient form submission
+            function submitPatientForm() {
+                const firstName = document.getElementById('newPatientFirstName');
+                const lastName = document.getElementById('newPatientLastName');
+                const email = document.getElementById('newPatientEmail');
+                if (!firstName || !lastName || !email) {
+                    console.error('Required form elements not found');
+                    alert('Form elements not found. Please refresh the page and try again.');
+                    return;
+                }
+
+                const firstNameValue = firstName.value.trim();
+                const lastNameValue = lastName.value.trim();
+                const emailValue = email.value.trim();
+                const phoneValue = document.getElementById('newPatientPhone')?.value.trim() || '';
+                const countryValue = document.getElementById('newPatientCountry')?.value.trim() || '';
+                const notesValue = document.getElementById('newPatientNotes')?.value.trim() || '';
+
+                // Validation
+                if (!firstNameValue || !lastNameValue || !emailValue) {
+                    alert('Please fill in all required fields: First Name, Last Name, and Email.');
+                    return;
+                }
+
+                // Show loading state
+                const submitBtn = document.querySelector('#addPatientModal .btn-success');
+                if (!submitBtn) {
+                    console.error('Submit button not found');
+                    return;
+                }
+
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Adding Patient...';
+                submitBtn.disabled = true;
+
+                // Create form data
+                const formData = new FormData();
+                formData.append('fName', firstNameValue);
+                formData.append('lName', lastNameValue);
+                formData.append('email', emailValue);
+                formData.append('phone', phoneValue);
+                formData.append('country', countryValue);
+                formData.append('notes', notesValue);
+
+                // Add CSRF token
+                const csrfToken = document.querySelector('input[name="_csrf"]');
+                if (csrfToken) {
+                    formData.append('_csrf', csrfToken.value);
+                } else {
+                    console.error('CSRF token not found');
+                }
+
+                console.log('Submitting patient data:', {
+                    firstName: firstNameValue,
+                    lastName: lastNameValue,
+                    email: emailValue,
+                    phone: phoneValue,
+                    country: countryValue,
+                    notes: notesValue
+                });
+
+                // Submit via AJAX
+                fetch('/psychologist/patients/create', {
+                    method: 'POST',
+                    body: formData
+                })
+                        .then(response => {
+                            if (response.redirected) {
+                                // If it's a redirect, follow it
+                                window.location.href = response.url;
+                                return;
+                            }
+                            return response.text().then(text => {
+                                try {
+                                    return JSON.parse(text);
+                                } catch {
+                                    return {success: false, message: text};
+                                }
+                            });
+                        })
+                        .then(data => {
+                            if (data && data.success) {
+                                // Close the modal
+                                const modalElement = document.getElementById('addPatientModal');
+                                if (modalElement) {
+                                    const modal = bootstrap.Modal.getInstance(modalElement);
+                                    if (modal)
+                                        modal.hide();
+                                }
+
+                                // Clear the form
+                                document.getElementById('newPatientFirstName').value = '';
+                                document.getElementById('newPatientLastName').value = '';
+                                document.getElementById('newPatientEmail').value = '';
+                                if (document.getElementById('newPatientPhone'))
+                                    document.getElementById('newPatientPhone').value = '';
+                                if (document.getElementById('newPatientCountry'))
+                                    document.getElementById('newPatientCountry').value = '';
+                                if (document.getElementById('newPatientNotes'))
+                                    document.getElementById('newPatientNotes').value = '';
+
+                                // Show success message
+                                alert('Patient added successfully! The page will refresh to update the patient list.');
+
+                                // Refresh the page to update the dropdown
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1500);
+                            } else {
+                                alert(data?.message || 'Error adding patient. Please try again.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Network error. Please check your connection and try again.');
+                        })
+                        .finally(() => {
+                            // Reset button state
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.disabled = false;
+                        });
+            }
+
+            async function cancelAppointment() {
+                if (selectedCell) {
+                    const day = selectedCell.dataset.day;
+                    const time = selectedCell.dataset.time;
+                    const appointmentKey = getAppointmentKey(day, time);
+                    const appointment = appointmentsData[appointmentKey];
+
+                    if (appointment) {
+                        if (confirm(`Cancel appointment with ${appointment.patientName} on ${appointment.date} at ${appointment.time}?`)) {
+                            try {
+                                // Show loading
+                                selectedCell.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+                                // Get CSRF token
+                                const csrfToken = document.querySelector('input[name="_csrf"]').value;
+
+                                // Send cancellation request
+                                const response = await fetch(`/psychologist/appointments/${appointment.id}/cancel`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': csrfToken
+                                    }
+                                });
+
+                                if (response.ok) {
+                                    // Remove appointment visual
+                                    selectedCell.classList.remove("appointment");
+                                    selectedCell.classList.add("available");
+                                    selectedCell.innerHTML = '';
+                                    selectedCell.title = '';
+
+                                    // Remove from data store
+                                    delete appointmentsData[appointmentKey];
+
+                                    alert('Appointment cancelled successfully!');
+
+                                    // Optionally reload the page to refresh the data
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 1000);
+                                } else {
+                                    const errorText = await response.text();
+                                    alert('Error: ' + errorText);
+                                    selectedCell.innerHTML = appointment.patientName.split(' ')[0];
+                                }
+                            } catch (error) {
+                                console.error('Error cancelling appointment:', error);
+                                alert('Network error cancelling appointment');
+                                selectedCell.innerHTML = appointment.patientName.split(' ')[0];
+                            }
+                        }
+                    } else {
+                        alert('No appointment data found for this time slot.');
+                    }
+                }
+                hideContextMenu();
+            }
+
+            // Helper function to calculate the next occurrence of a day
+            function getNextDate(dayOfWeek) {
+                const days = {
+                    'MONDAY': 1,
+                    'TUESDAY': 2,
+                    'WEDNESDAY': 3,
+                    'THURSDAY': 4,
+                    'FRIDAY': 5,
+                    'SATURDAY': 6,
+                    'SUNDAY': 0
+                };
+                const today = new Date();
+                const targetDay = days[dayOfWeek];
+                const currentDay = today.getDay();
+                let daysToAdd = targetDay - currentDay;
+                if (daysToAdd <= 0) {
+                    daysToAdd += 7;
+                }
+
+                const nextDate = new Date(today);
+                nextDate.setDate(today.getDate() + daysToAdd);
+                return nextDate.toISOString().split('T')[0];
+            }
+
+            // Before form submission, collect all available slots
+            document.getElementById('availability-form').addEventListener('submit', function (e) {
+                const availableSlots = document.querySelectorAll(".grid-cell.available");
+                availableSlots.forEach(slot => {
+                    const hiddenInput = document.createElement("input");
+                    hiddenInput.type = "hidden";
+                    hiddenInput.name = "slots";
+                    hiddenInput.value = `${slot.dataset.day}|${slot.dataset.time}`;
+                    this.appendChild(hiddenInput);
+                });
+            });
+
+        </script>
+
+        <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    </body>
+</html>

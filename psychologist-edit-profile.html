@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Edit Profile – My Therapy</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}"/>
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}"/>
+    </head>
+    <body>
+
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="card-title mb-0">
+                                <i class="fa-solid fa-user-edit me-2"></i>Edit Your Profile
+                            </h4>
+                        </div>
+                        <div class="card-body p-4">
+                            <form th:action="@{/psychologist/profile/edit}" method="post" th:object="${psychologist}">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="fname" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="fname" th:field="*{fName}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="lname" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="lname" th:field="*{lName}" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" th:field="*{email}" readonly>
+                                    <div class="form-text">Email cannot be changed</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phoneNumber" th:field="*{phoneNumber}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="specialty" class="form-label">Specialty</label>
+                                    <input type="text" class="form-control" id="specialty" th:field="*{specialty}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="professionalReg" class="form-label">Professional Registration</label>
+                                    <input type="text" class="form-control" id="professionalReg" th:field="*{professionalReg}" readonly>
+                                    <div class="form-text">Professional registration cannot be changed</div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="Leave blank to keep current password" 
+                                           th:value="${psychologist != null ? '' : null}">
+                                    <div class="form-text">Only enter if you want to change your password</div>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a th:href="@{/psychologist/dashboard}" class="btn btn-secondary me-md-2">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    </body>
+</html>

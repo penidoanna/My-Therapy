@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>My Patients – My Therapy</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}"/>
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}"/>
+    </head>
+    <body>
+
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="container mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 fw-bold">My Patients</h1>
+                    <p class="text-muted">Manage your patient list and view their information</p>
+                </div>
+                <div>
+                    <span class="badge bg-primary fs-6" th:text="'Total: ' + ${patients.size()}"></span>
+                </div>
+            </div>
+
+            <!-- Patients List -->
+            <div th:if="${patients != null and !patients.isEmpty()}">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Country</th>
+                                <th>Last Appointment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="patient : ${patients}">
+                                <td>
+                                    <strong th:text="${patient.fName + ' ' + patient.lName}"></strong>
+                                </td>
+                                <td th:text="${patient.email}"></td>
+                                <td th:text="${patient.phone} ?: 'Not provided'"></td>
+                                <td th:text="${patient.country} ?: 'Not provided'"></td>
+                                <td>
+                                    <span th:if="${patient.notes}" class="text-muted small" th:text="${patient.notes}"></span>
+                                    <span th:unless="${patient.notes}" class="text-muted small">No notes</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{'/appointments/create'}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fa-solid fa-calendar-plus me-1"></i> Schedule
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${patients == null or patients.isEmpty()}" class="text-center py-5">
+                <div class="empty-state">
+                    <i class="fa-solid fa-users fa-3x text-muted mb-3"></i>
+                    <h3 class="text-muted">No Patients Yet</h3>
+                    <p class="text-muted mb-4">You don't have any patients assigned to you yet.</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a th:href="@{/test-add-patients}" class="btn btn-primary">
+                            <i class="fa-solid fa-user-plus me-2"></i>Add Test Patients
+                        </a>
+                        <a th:href="@{/psychologist/dashboard}" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    </body>
+</html>

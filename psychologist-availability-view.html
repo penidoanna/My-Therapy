@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>View Availability – My Therapy</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}"/>
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}"/>
+
+        <style>
+            body {
+                background-color: #f9fafb;
+            }
+
+            .grid-wrap {
+                overflow-x: auto;
+            }
+            .avail-grid {
+                display: grid;
+                grid-template-columns: 80px repeat(7, minmax(110px, 1fr));
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                background: #fff;
+            }
+            .avail-grid .head {
+                position: sticky;
+                top: 0;
+                background: #fff;
+                z-index: 2;
+                font-weight: 600;
+                font-size: 0.9rem;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .avail-grid .time-col {
+                background: #f8fafc;
+                font-size: 0.85rem;
+                color: #64748b;
+                border-right: 1px solid #e5e7eb;
+            }
+            .cell {
+                height: 28px;
+                border-right: 1px solid #f1f5f9;
+                border-bottom: 1px solid #f1f5f9;
+                background: #fff;
+                transition: all 0.2s ease;
+                cursor: default;
+            }
+            .cell.active {
+                background: #d1fae5;
+                cursor: pointer;
+            }
+            .cell.active:hover {
+                background: #a7f3d0;
+                transform: scale(1.05);
+            }
+            .cell.booked {
+                background: #fecaca;
+                cursor: not-allowed;
+            }
+
+            .legend-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                display: inline-block;
+                margin-right: 6px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="container py-4">
+
+            <div class="mb-3">
+                <h1 class="h4 fw-bold mb-1">
+                    Availability for
+                    <span th:text="${psychologist.fName}">First</span>
+                    <span th:text="${psychologist.lName}">Last</span>
+                </h1>
+                <p class="text-muted mb-0" th:if="${isPublic}">
+                    Click on an available time slot to book an appointment.
+                </p>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h2 class="h6 fw-semibold m-0">Weekly Availability</h2>
+
+                        <div class="d-flex gap-3 align-items-center small text-muted">
+                            <span><span class="legend-dot" style="background:#d1fae5;"></span>Available</span>
+                            <span><span class="legend-dot" style="background:#fecaca;"></span>Booked</span>
+                            <span><span class="legend-dot" style="background:#fff;border:1px solid #e5e7eb;"></span>Unavailable</span>
+                        </div>
+                    </div>
+
+                    <div class="grid-wrap">
+                        <div id="availGrid" class="avail-grid">
+                            <!-- Header row -->
+                            <div class="head time-col p-2"></div>
+                            <div class="head p-2 text-center">Mon</div>
+                            <div class="head p-2 text-center">Tue</div>
+                            <div class="head p-2 text-center">Wed</div>
+                            <div class="head p-2 text-center">Thu</div>
+                            <div class="head p-2 text-center">Fri</div>
+                            <div class="head p-2 text-center">Sat</div>
+                            <div class="head p-2 text-center">Sun</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bootstrap Booking Modal -->
+        <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bookingModalLabel">Book Appointment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="bookingForm" th:action="@{/appointments/book}" method="post">
+                            <input type="hidden" id="psychologistId" name="psychologistId" th:value="${psychologist.id}">
+                            <input type="hidden" id="selectedDay" name="selectedDay">
+                            <input type="hidden" id="selectedTime" name="selectedTime">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Psychologist</label>
+                                <p class="form-control-plaintext ps-2">
+                                    <i class="fa-solid fa-user-doctor text-primary me-2"></i>
+                                    <span th:text="${psychologist.fName}">First</span>
+                                    <span th:text="${psychologist.lName}">Last</span>
+                                </p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Appointment Time</label>
+                                <p class="form-control-plaintext ps-2" id="appointmentTimeDisplay">
+                                    <i class="fa-solid fa-clock text-primary me-2"></i>
+                                    <span id="timeDisplayText">Select a time</span>
+                                </p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="notes" class="form-label fw-semibold">Notes (Optional)</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                          placeholder="Any specific concerns or topics you'd like to discuss..."></textarea>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="fa-solid fa-calendar-check me-2"></i>Confirm Booking
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            document.addEventListener('DOMContentLoaded', function () {
+                const gridEl = document.getElementById("availGrid");
+                if (!gridEl)
+                    return;
+
+                const startHour = 6;
+                const endHour = 21;
+                const stepMin = 30;
+                const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+                const existing = /*[[${slots}]]*/ [];
+                const slotsArray = existing || [];
+
+                console.log('Available slots:', slotsArray); // Debug
+
+                const times = [];
+                for (let h = startHour; h < endHour; h++) {
+                    for (let m = 0; m < 60; m += stepMin) {
+                        const hh = String(h).padStart(2, "0");
+                        const mm = String(m).padStart(2, "0");
+                        times.push(`${hh}:${mm}`);
+                    }
+                }
+
+                // Create grid cells
+                times.forEach((t) => {
+                    const timeCell = document.createElement("div");
+                    timeCell.className = "time-col p-2 cell";
+                    timeCell.textContent = t;
+                    gridEl.appendChild(timeCell);
+
+                    for (let d = 0; d < 7; d++) {
+                        const c = document.createElement("div");
+                        c.className = "cell";
+                        c.dataset.day = days[d];
+                        c.dataset.time = t;
+                        gridEl.appendChild(c);
+                    }
+                });
+
+                // Fill available slots and make them clickable
+                function fillAvailableSlots() {
+                    if (!slotsArray || slotsArray.length === 0) {
+                        console.log('No slots to display');
+                        return;
+                    }
+
+                    slotsArray.forEach(slot => {
+                        if (!slot)
+                            return;
+
+                        const day = slot.dayOfWeek;
+                        const startTime = formatTime(slot.startTime);
+                        const endTime = formatTime(slot.endTime);
+
+                        console.log(`Processing slot: ${day} ${startTime}-${endTime}`);
+
+                        if (!day || !startTime || !endTime)
+                            return;
+
+                        // Mark all time slots within this availability range
+                        times.forEach(time => {
+                            if (time >= startTime && time < endTime) {
+                                const cell = gridEl.querySelector(`.cell[data-day="${day}"][data-time="${time}"]`);
+                                if (cell) {
+                                    cell.classList.add("active");
+
+                                    // Add click event
+                                    cell.addEventListener('click', function () {
+                                        openBookingModal(day, time);
+                                    });
+                                }
+                            }
+                        });
+                    });
+                }
+
+                function formatTime(time) {
+                    if (!time)
+                        return '';
+                    // Handle both LocalTime objects and strings
+                    const timeStr = time.toString();
+                    return timeStr.substring(0, 5); // Get HH:mm format
+                }
+
+                function openBookingModal(day, time) {
+                    console.log(`Opening modal for ${day} at ${time}`);
+
+                    const dayDisplay = document.getElementById('selectedDay');
+                    const timeDisplay = document.getElementById('selectedTime');
+                    const timeDisplayText = document.getElementById('timeDisplayText');
+
+                    // Set the values
+                    dayDisplay.value = day;
+                    timeDisplay.value = time;
+
+                    // Format the display
+                    const dayNames = {
+                        'MONDAY': 'Monday',
+                        'TUESDAY': 'Tuesday',
+                        'WEDNESDAY': 'Wednesday',
+                        'THURSDAY': 'Thursday',
+                        'FRIDAY': 'Friday',
+                        'SATURDAY': 'Saturday',
+                        'SUNDAY': 'Sunday'
+                    };
+
+                    timeDisplayText.textContent = `${dayNames[day]} at ${time}`;
+
+                    // Show Bootstrap modal
+                    const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+                    modal.show();
+                }
+
+                // Initialize the grid
+                fillAvailableSlots();
+            });
+            /*]]>*/
+        </script>
+    </body>
+</html>

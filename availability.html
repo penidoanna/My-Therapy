@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Set Availability – My Therapy</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}"/>
+
+        <style>
+            .day-card {
+                border-radius: 1rem;
+                border: 1px solid #e5e7eb;
+                background: #fff;
+                transition: 0.15s;
+            }
+
+            .time-slot {
+                background: #eef2ff;
+                padding: .4rem .7rem;
+                border-radius: .5rem;
+            }
+        </style>
+    </head>
+
+    <body class="bg-light">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+        <div class="container py-5">
+            <h1 class="h3 fw-bold mb-3">Set Your Weekly Availability</h1>
+            <p class="text-muted mb-4">Choose when clients can book consultations.</p>
+
+            <form th:action="@{'/psychologists/' + ${id} + '/availability'}" method="post">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6" th:each="day, i : ${days}">
+                        <div class="day-card p-3 shadow-sm">
+
+                            <h5 class="fw-semibold mb-3" th:text="${day}">Monday</h5>
+
+                            <div class="slot-container" th:id="'slots-' + ${i.index}">
+                                <!-- Time slots -->
+                                <div class="mb-2 d-flex align-items-center gap-2"
+                                     th:each="slot, j : ${availability[day]}">
+
+                                    <span class="time-slot">
+                                        <span th:text="${slot.start}"></span> - <span th:text="${slot.end}"></span>
+                                    </span>
+
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            type="button"
+                                            th:onclick="'removeSlot(' + ${i.index} + ',' + ${j.index} + ')'">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+
+                                </div>
+                            </div>
+
+                            <!-- Add new slot -->
+                            <div class="input-group mt-2">
+                                <input type="time" class="form-control" th:name="'start-' + ${i.index}">
+                                <input type="time" class="form-control" th:name="'end-' + ${i.index}">
+                                <button class="btn btn-outline-primary" type="button"
+                                        th:onclick="'addSlot(' + ${i.index} + ')'">
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        Save Availability
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+
+        <script>
+            // Simple client-side dynamic add/remove slot helpers
+            function addSlot(dayIndex) {
+                alert("TODO: Implement add slot — can do it fully client-side or server-side on form submit.");
+            }
+
+            function removeSlot(dayIndex, slotIndex) {
+                alert("TODO: Implement remove slot.");
+            }
+        </script>
+    </body>
+</html>

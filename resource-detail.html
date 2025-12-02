@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title th:text="${resource.title} + ' - My Therapy'">Resource Detail</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}"/>
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}"/>
+        <style>
+            body {
+                background-color: #f9fafb;
+            }
+            .card-soft {
+                border: none;
+                border-radius: 1rem;
+                box-shadow: 0 6px 25px rgba(0, 0, 0, .05);
+            }
+        </style>
+    </head>
+    <body>
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main class="container my-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card card-soft">
+                        <div class="card-body p-4">
+                            <a th:href="@{/resources}" class="btn btn-outline-primary mb-4">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Resources
+                            </a>
+
+                            <div class="d-flex align-items-center mb-3">
+                                <div th:classappend="'card-icon ' + ${resource.type == 'video' ? 'bg-video' : 
+                                     resource.type == 'ebook' ? 'bg-ebook' : 
+                                     resource.type == 'article' ? 'bg-article' : 'bg-exercise'}" 
+                                     style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 15px;">
+                                    <i th:class="'fas ' + ${resource.icon}" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <div>
+                                    <span class="badge bg-primary" th:text="${resourceType}">Resource Type</span>
+                                    <span class="badge bg-secondary ms-2" th:text="${resource.subject}">Subject</span>
+                                </div>
+                            </div>
+
+                            <h1 class="h3 fw-bold mb-3" th:text="${resource.title}">Resource Title</h1>
+                            <p class="text-muted mb-4" th:text="${resource.description}">Resource description</p>
+
+                            <div class="resource-content border rounded p-4 bg-light">
+                                <h5 class="fw-semibold mb-3">Resource Content</h5>
+                                <p class="text-muted">
+                                    This is where the actual <span th:text="${resourceType}">resource</span> content would be displayed.
+                                    For videos, this would be an embedded player. For e-books, a PDF viewer. 
+                                    For articles, the full text content. For exercises, interactive instructions.
+                                </p>
+
+                                <div th:if="${resource.duration}" class="mt-3">
+                                    <strong>Duration:</strong> <span th:text="${resource.duration}">Duration</span>
+                                </div>
+
+                                <div class="mt-4">
+                                    <a th:href="${resource.url}" class="btn btn-primary me-2" th:if="${resource.url && !resource.url.startsWith('/resources/')}">
+                                        <i class="fas fa-external-link-alt me-2"></i>View External Resource
+                                    </a>
+                                    <button class="btn btn-success">
+                                        <i class="fas fa-bookmark me-2"></i>Save to My Resources
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="border-top bg-white py-3 mt-5">
+            <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span class="text-muted">&copy; <span th:text="${#dates.year(#dates.createNow())}">2025</span> My Therapy</span>
+                <span class="text-muted small">Built with Spring Boot &amp; PostgreSQL</span>
+            </div>
+        </footer>
+
+        <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    </body>
+</html>

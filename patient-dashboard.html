@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <head>
+        <meta charset="UTF-8">
+        <title>My Dashboard – My Therapy</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}">
+        <style>
+            body {
+                background: #f9fafb;
+            }
+            .card-soft {
+                border: none;
+                border-radius: 1rem;
+                box-shadow: 0 6px 25px rgba(0, 0, 0, .05);
+            }
+            .appt-card {
+                border-left: 4px solid #3b82f6;
+                background: white;
+                border-radius: 0.75rem;
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .appt-card .time {
+                font-weight: 600;
+                color: #1e3a8a;
+            }
+            .appt-empty {
+                background: #eef2ff;
+                border-radius: .75rem;
+                padding: 1.2rem;
+                color: #4f46e5;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main class="py-4">
+            <div class="container">
+
+                <!-- Greeting -->
+                <div class="mb-4">
+                    <h1 class="h3 fw-bold">
+                        Welcome, <span th:text="${patient.fName}">Patient</span> 👋
+                    </h1>
+                    <p class="text-muted">Manage your sessions and explore our therapists.</p>
+                </div>
+
+                <div class="row g-4">
+
+                    <!-- Quick Actions -->
+                    <div class="col-lg-4">
+                        <div class="card card-soft">
+                            <div class="card-body">
+                                <h2 class="h6 fw-semibold mb-3">Quick actions</h2>
+
+                                <a th:href="@{/psychologists}" class="btn btn-primary w-100 mb-2">
+                                    Book a new appointment
+                                </a>
+
+                                <a th:href="@{/appointments}" class="btn btn-outline-secondary w-100 mb-2">
+                                    View all appointments
+                                </a>
+
+                                <a th:href="@{/patient/profile/edit}" class="btn btn-outline-secondary w-100 mb-2">
+                                    Edit my profile
+                                </a>
+                                <a th:href="@{/patient/payment-method}" class="btn btn-outline-secondary w-100">
+                                    Manage payment method
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointments Section -->
+                    <div class="col-lg-8">
+                        <div class="card card-soft">
+                            <div class="card-body">
+                                <h2 class="h6 fw-semibold mb-3">Upcoming appointments</h2>
+
+                                <!-- No appointments -->
+                                <div th:if="${#lists.isEmpty(appointments)}" class="appt-empty">
+                                    You don't have any upcoming appointments yet.
+                                    <br>
+                                    <a th:href="@{/psychologists}" class="fw-semibold">Book your first session</a>.
+                                </div>
+
+                                <!-- Appointment List -->
+                                <div th:if="${!#lists.isEmpty(appointments)}">
+                                    <div th:each="a : ${appointments}" class="appt-card">
+
+                                        <div class="d-flex justify-content-between align-items-center">
+
+                                            <div>
+                                                <div class="time"
+                                                     th:text="${#temporals.format(a.dateHour, 'EEEE, dd MMM yyyy — HH:mm')}">
+                                                    Monday, 14 Oct — 14:00
+                                                </div>
+
+                                                <div class="text-muted small">
+                                                    with
+                                                    <span th:text="${a.psychologist.fName}">Dr</span>
+                                                    <span th:text="${a.psychologist.lName}">Name</span>
+                                                </div>
+
+                                                <div class="small mt-1" th:if="${a.notes}">
+                                                    <strong>Notes:</strong>
+                                                    <span th:text="${a.notes}">---</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Cancel Button -->
+                                            <form th:action="@{'/appointments/' + ${a.id} + '/cancel'}" method="post">
+                                                <button class="btn btn-sm btn-outline-danger">
+                                                    Cancel
+                                                </button>
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div> 
+
+            </div> 
+        </main>
+
+        <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+    </body>
+</html>

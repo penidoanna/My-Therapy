@@ -1,0 +1,167 @@
+<div th:fragment="navbar">
+    <style>
+        :root {
+            --primary-color: #4a69bd;
+            --secondary-color: #6a89cc;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--primary-color) !important;
+        }
+
+        .navbar-brand i {
+            color: var(--primary-color);
+        }
+
+        .nav-link {
+            font-weight: 500;
+            padding: 8px 16px !important;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(74, 105, 189, 0.1);
+        }
+
+        .nav-link.active {
+            background-color: var(--primary-color);
+            color: white !important;
+        }
+
+        .btn-outline-primary {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #3a59ad;
+            border-color: #3a59ad;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem; 
+            border-radius: 20px;
+            margin-right: 10px;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        .user-info i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+
+        .user-dropdown {
+            margin-left: 10px;
+        }
+    </style>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" th:href="@{/}">
+                <i class="fa-solid fa-heart-pulse me-2"></i>
+                <span>My Therapy</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#mainNavbar" aria-controls="mainNavbar"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 me-3">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/psychologists}">Find a psychologist</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/resources}">Resources</a>
+                    </li>
+                </ul>
+
+                <!-- Right side content based on authentication state -->
+                <div class="d-flex align-items-center gap-2">
+
+                    <!-- 1. Logged Out State: Only show login/signup buttons -->
+                    <div sec:authorize="!isAuthenticated()" class="d-flex gap-2">
+                        <a class="btn btn-outline-primary btn-sm" th:href="@{/login}">Log in</a>
+                        <a class="btn btn-primary btn-sm" th:href="@{/register}">Sign up</a>
+                    </div>
+
+                    <!-- 2. Logged In State - Patient: Show patient dropdown menu -->
+                    <div sec:authorize="isAuthenticated() and hasRole('ROLE_PATIENT')" class="d-flex align-items-center">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="patientDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-user me-1"></i>
+                                <span sec:authentication="name">Patient</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="patientDropdown">
+                                <li><a class="dropdown-item" th:href="@{/patient/dashboard}"><i class="fa-solid fa-gauge me-2"></i>Dashboard</a></li>
+                                <li><a class="dropdown-item" th:href="@{/appointments}"><i class="fa-solid fa-calendar-check me-2"></i>My Appointments</a></li>
+                                <li><a class="dropdown-item" th:href="@{/patient/profile/edit}"><i class="fa-solid fa-user-pen me-2"></i>Edit Profile</a></li>
+                                <li><a class="dropdown-item" th:href="@{//patient/payment-method}"><i class="fa-solid fa-user-pen me-2"></i>Manage Payment Method</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form th:action="@{/logout}" method="post">
+                                        <button class="dropdown-item text-danger" type="submit">
+                                            <i class="fa-solid fa-right-from-bracket me-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 3. Logged In State - Psychologist: Show welcome message and logout button -->
+                    <div sec:authorize="isAuthenticated() and hasRole('ROLE_PSYCHOLOGIST')" class="d-flex align-items-center">
+                        <span class="navbar-text me-3 d-none d-sm-block">
+                            Welcome!
+                        </span>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="patientDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-user me-1"></i>
+                                <span sec:authentication="name">Patient</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="patientDropdown">
+                                <li><a class="dropdown-item" th:href="@{/psychologist/dashboard}"><i class="fa-solid fa-gauge me-2"></i>Dashboard</a></li>
+                                <li><a class="dropdown-item" th:href="@{/psychologists/availability/manage}"><i class="fa-solid fa-user-pen me-2"></i>Manage Availability</a></li>
+                                <li><a class="dropdown-item" th:href="@{/psychologist/appointments}"><i class="fa-solid fa-calendar-check me-2"></i>View Appointments</a></li>
+                                <li><a class="dropdown-item" th:href="@{/patients}"><i class="fa-solid fa-calendar-check me-2"></i>View my Patients</a></li>
+                                <li><a class="dropdown-item" th:href="@{/psychologist/profile/edit}"><i class="fa-solid fa-user-pen me-2"></i>Edit Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form th:action="@{/logout}" method="post">
+                                        <button class="dropdown-item text-danger" type="submit">
+                                            <i class="fa-solid fa-right-from-bracket me-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>                      
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+</div>

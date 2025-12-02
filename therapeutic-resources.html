@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Therapeutic Resources – My Therapy</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}"/>
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}"/>
+        <style>
+            body {
+                background-color: #f9fafb;
+            }
+            .card-soft {
+                border: none;
+                border-radius: 1rem;
+                box-shadow: 0 6px 25px rgba(0, 0, 0, .05);
+            }
+            .section-title {
+                font-weight: 700;
+                color: #1e3a8a;
+            }
+            .resource-card {
+                border-radius: 0.75rem;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                height: 100%;
+            }
+            .resource-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+            }
+            .resource-card-link {
+                text-decoration: none;
+                color: inherit;
+                display: block;
+                height: 100%;
+            }
+            .resource-card-link:hover {
+                text-decoration: none;
+                color: inherit;
+            }
+            .card-icon {
+                width: 50px;
+                height: 50px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.25rem;
+                margin-bottom: 1rem;
+            }
+            .bg-video {
+                background-color: rgba(59, 130, 246, 0.1);
+                color: #3b82f6;
+            }
+            .bg-ebook {
+                background-color: rgba(16, 185, 129, 0.1);
+                color: #10b981;
+            }
+            .bg-article {
+                background-color: rgba(245, 158, 11, 0.1);
+                color: #f59e0b;
+            }
+            .bg-exercise {
+                background-color: rgba(139, 92, 246, 0.1);
+                color: #8b5cf6;
+            }
+            .carousel-control {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: white;
+                border: 1px solid #e5e7eb;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #4a69bd;
+                transition: all 0.2s ease;
+            }
+            .carousel-control:hover {
+                background: #4a69bd;
+                color: white;
+            }
+            .subject-filter {
+                border-radius: 0.75rem;
+                border: 1px solid #e5e7eb;
+                padding: 0.5rem 1rem;
+                background: white;
+            }
+            .resource-title {
+                font-weight: 600;
+                color: #1f2937;
+                font-size: 1rem;
+                line-height: 1.4;
+            }
+            .resource-description {
+                color: #6b7280;
+                font-size: 0.875rem;
+                line-height: 1.5;
+            }
+            .resource-meta {
+                font-size: 0.75rem;
+                color: #9ca3af;
+            }
+            .external-link-badge {
+                display: inline-block;
+                font-size: 0.65rem;
+                padding: 2px 6px;
+                border-radius: 4px;
+                background-color: rgba(59, 130, 246, 0.1);
+                color: #3b82f6;
+                margin-left: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main class="py-4">
+            <div class="container">
+                <!-- Page Header -->
+                <div class="mb-4">
+                    <h1 class="h3 fw-bold">Therapeutic Resources</h1>
+                    <p class="text-muted">Explore videos, e-books, articles, and exercises to support your mental wellness journey</p>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="card card-soft mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold mb-1">Filter by subject:</label>
+                            </div>
+                            <div class="col-md-6">
+                                <select class="form-select subject-filter" id="subjectFilter">
+                                    <option value="all">All Subjects</option>
+                                    <option value="mindfulness">Mindfulness</option>
+                                    <option value="relationship">Relationship</option>
+                                    <option value="anxiety">Anxiety</option>
+                                    <option value="stress">Stress Management</option>
+                                    <option value="sleep">Sleep Improvement</option>
+                                    <option value="focus">Focus & Concentration</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Videos Carousel -->
+                <div class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 fw-bold section-title">
+                            <i class="fa-solid fa-play-circle me-2"></i>
+                            Videos
+                        </h2>
+                        <div class="d-flex gap-2">
+                            <button class="carousel-control prev" data-carousel="videos">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button class="carousel-control next" data-carousel="videos">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="carousel-container">
+                        <div class="carousel-track row g-3" id="videos-carousel">
+                            <!-- Videos will be loaded here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E-books Carousel -->
+                <div class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 fw-bold section-title">
+                            <i class="fa-solid fa-book me-2"></i>
+                            E-books
+                        </h2>
+                        <div class="d-flex gap-2">
+                            <button class="carousel-control prev" data-carousel="ebooks">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button class="carousel-control next" data-carousel="ebooks">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="carousel-container">
+                        <div class="carousel-track row g-3" id="ebooks-carousel">
+                            <!-- E-books will be loaded here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Articles Carousel -->
+                <div class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 fw-bold section-title">
+                            <i class="fa-solid fa-file-alt me-2"></i>
+                            Articles
+                        </h2>
+                        <div class="d-flex gap-2">
+                            <button class="carousel-control prev" data-carousel="articles">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button class="carousel-control next" data-carousel="articles">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="carousel-container">
+                        <div class="carousel-track row g-3" id="articles-carousel">
+                            <!-- Articles will be loaded here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercises Carousel -->
+                <div class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 fw-bold section-title">
+                            <i class="fa-solid fa-running me-2"></i>
+                            Exercises
+                        </h2>
+                        <div class="d-flex gap-2">
+                            <button class="carousel-control prev" data-carousel="exercises">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button class="carousel-control next" data-carousel="exercises">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="carousel-container">
+                        <div class="carousel-track row g-3" id="exercises-carousel">
+                            <!-- Exercises will be loaded here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="border-top bg-white py-3 mt-5">
+            <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span class="text-muted">&copy; <span th:text="${#dates.year(#dates.createNow())}">2025</span> My Therapy</span>
+                <span class="text-muted small">Built with Spring Boot &amp; PostgreSQL</span>
+            </div>
+        </footer>
+
+        <script th:src="@{/webjars/bootstrap/5.3.0/js/bootstrap.bundle.min.js}"></script>
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', function () {
+                // Load resources from server
+                const serverResources = /*[[${resources}]]*/ [];
+                console.log('Loaded resources from server:', serverResources);
+
+                // Sample fallback data with external links (in case database is empty)
+                const fallbackResources = {
+                    videos: [
+                        {
+                            title: "Mindful Breathing Techniques",
+                            description: "Learn simple breathing exercises to reduce stress and increase focus.",
+                            subject: "mindfulness",
+                            duration: "15 min",
+                            icon: "fa-wind",
+                            url: "https://www.youtube.com/watch?v=ZToicYcHIOU"
+                        },
+                        {
+                            title: "Managing Anxiety in Daily Life",
+                            description: "Practical strategies to cope with anxiety in various situations.",
+                            subject: "anxiety",
+                            duration: "22 min",
+                            icon: "fa-brain",
+                            url: "https://www.youtube.com/watch?v=WWloIAQpMcQ"
+                        },
+                        {
+                            title: "Effective Communication Skills",
+                            description: "Improve your relationships through better communication techniques.",
+                            subject: "relationship",
+                            duration: "18 min",
+                            icon: "fa-comments",
+                            url: "https://www.youtube.com/watch?v=eIho2S0ZahI"
+                        }
+                    ],
+                    ebooks: [
+                        {
+                            title: "The Mindfulness Guide",
+                            description: "A comprehensive guide to practicing mindfulness in everyday life.",
+                            subject: "mindfulness",
+                            pages: "120 pages",
+                            icon: "fa-book",
+                            url: "https://www.mindful.org/meditation/mindfulness-getting-started/"
+                        },
+                        {
+                            title: "Understanding Anxiety",
+                            description: "Learn about anxiety disorders and effective coping strategies.",
+                            subject: "anxiety",
+                            pages: "95 pages",
+                            icon: "fa-book",
+                            url: "https://adaa.org/understanding-anxiety"
+                        },
+                        {
+                            title: "Healthy Relationships",
+                            description: "Building and maintaining healthy connections with others.",
+                            subject: "relationship",
+                            pages: "110 pages",
+                            icon: "fa-book",
+                            url: "https://www.psychologytoday.com/us/basics/relationships"
+                        }
+                    ],
+                    articles: [
+                        {
+                            title: "5 Mindfulness Practices for Beginners",
+                            description: "Simple techniques to start your mindfulness journey today.",
+                            subject: "mindfulness",
+                            readTime: "5 min read",
+                            icon: "fa-newspaper",
+                            url: "https://www.mindful.org/take-a-mindful-moment-5-simple-practices-for-daily-life/"
+                        },
+                        {
+                            title: "How Anxiety Affects Your Body",
+                            description: "Understanding the physical symptoms of anxiety and how to manage them.",
+                            subject: "anxiety",
+                            readTime: "7 min read",
+                            icon: "fa-newspaper",
+                            url: "https://www.healthline.com/health/anxiety/effects-on-body"
+                        },
+                        {
+                            title: "Communication in Relationships",
+                            description: "Key communication skills for healthier relationships.",
+                            subject: "relationship",
+                            readTime: "6 min read",
+                            icon: "fa-newspaper",
+                            url: "https://www.verywellmind.com/how-to-improve-your-relationships-3144954"
+                        }
+                    ],
+                    exercises: [
+                        {
+                            title: "Body Scan Meditation",
+                            description: "A guided exercise to increase body awareness and relaxation.",
+                            subject: "mindfulness",
+                            duration: "10 min",
+                            icon: "fa-spa",
+                            url: "https://www.mindful.org/body-scan-meditation/"
+                        },
+                        {
+                            title: "Anxiety Grounding Techniques",
+                            description: "Exercises to help you stay present during anxious moments.",
+                            subject: "anxiety",
+                            duration: "8 min",
+                            icon: "fa-mountain",
+                            url: "https://www.healthline.com/health/grounding-techniques"
+                        },
+                        {
+                            title: "Empathy Building Exercise",
+                            description: "Practice understanding others' perspectives to improve relationships.",
+                            subject: "relationship",
+                            duration: "12 min",
+                            icon: "fa-heart",
+                            url: "https://positivepsychology.com/empathy-worksheets/"
+                        }
+                    ]
+                };
+
+                // Convert server resources to organized format
+                const resources = {
+                    videos: [],
+                    ebooks: [],
+                    articles: [],
+                    exercises: []
+                };
+
+                // Organize server resources by type
+                if (serverResources && serverResources.length > 0) {
+                    serverResources.forEach(resource => {
+                        const type = resource.type ? resource.type.toLowerCase() : '';
+                        if (type === 'video') {
+                            resources.videos.push(resource);
+                        } else if (type === 'ebook') {
+                            resources.ebooks.push(resource);
+                        } else if (type === 'article') {
+                            resources.articles.push(resource);
+                        } else if (type === 'exercise') {
+                            resources.exercises.push(resource);
+                        }
+                    });
+                }
+
+                // Use fallback data if database is empty
+                if (resources.videos.length === 0)
+                    resources.videos = fallbackResources.videos;
+                if (resources.ebooks.length === 0)
+                    resources.ebooks = fallbackResources.ebooks;
+                if (resources.articles.length === 0)
+                    resources.articles = fallbackResources.articles;
+                if (resources.exercises.length === 0)
+                    resources.exercises = fallbackResources.exercises;
+
+                console.log('Final resources:', resources);
+
+                // Initialize carousels
+                const carousels = {
+                    videos: {
+                        element: document.getElementById('videos-carousel'),
+                        position: 0,
+                        type: 'videos'
+                    },
+                    ebooks: {
+                        element: document.getElementById('ebooks-carousel'),
+                        position: 0,
+                        type: 'ebooks'
+                    },
+                    articles: {
+                        element: document.getElementById('articles-carousel'),
+                        position: 0,
+                        type: 'articles'
+                    },
+                    exercises: {
+                        element: document.getElementById('exercises-carousel'),
+                        position: 0,
+                        type: 'exercises'
+                    }
+                };
+
+                const itemsPerView = 4;
+                const subjectFilter = document.getElementById('subjectFilter');
+
+                // Load resources into carousels
+                function loadResources(selectedSubject = 'all') {
+                    for (const [type, carousel] of Object.entries(carousels)) {
+                        carousel.element.innerHTML = '';
+                        let bgClass, iconClass;
+                        switch (type) {
+                            case 'videos':
+                                bgClass = 'bg-video';
+                                iconClass = 'fa-play';
+                                break;
+                            case 'ebooks':
+                                bgClass = 'bg-ebook';
+                                iconClass = 'fa-book';
+                                break;
+                            case 'articles':
+                                bgClass = 'bg-article';
+                                iconClass = 'fa-newspaper';
+                                break;
+                            case 'exercises':
+                                bgClass = 'bg-exercise';
+                                iconClass = 'fa-running';
+                                break;
+                        }
+
+                        resources[type].forEach(resource => {
+                            if (selectedSubject === 'all' || resource.subject === selectedSubject) {
+                                const col = document.createElement('div');
+                                col.className = 'col-md-6 col-lg-3';
+
+                                let metaInfo = '';
+                                if (type === 'videos' || type === 'exercises') {
+                                    metaInfo = `<div class="resource-meta mt-2"><i class="fa-regular fa-clock me-1"></i>${resource.duration || 'N/A'}<span class="external-link-badge"><i class="fa-solid fa-external-link-alt"></i></span></div>`;
+                                } else if (type === 'ebooks') {
+                                    metaInfo = `<div class="resource-meta mt-2"><i class="fa-solid fa-file me-1"></i>${resource.pages || 'N/A'}<span class="external-link-badge"><i class="fa-solid fa-external-link-alt"></i></span></div>`;
+                                } else if (type === 'articles') {
+                                    metaInfo = `<div class="resource-meta mt-2"><i class="fa-regular fa-clock me-1"></i>${resource.readTime || 'N/A'}<span class="external-link-badge"><i class="fa-solid fa-external-link-alt"></i></span></div>`;
+                                }
+
+                                // Make the entire card clickable
+                                col.innerHTML = `
+                                    <a href="${resource.url || '#'}" target="_blank" class="resource-card-link">
+                                        <div class="card resource-card card-soft h-100">
+                                            <div class="card-body">
+                                                <div class="card-icon ${bgClass}">
+                                                    <i class="fa-solid ${resource.icon || iconClass}"></i>
+                                                </div>
+                                                <h5 class="resource-title">${resource.title}</h5>
+                                                <p class="resource-description">${resource.description}</p>
+                                                ${metaInfo}
+                                            </div>
+                                        </div>
+                                    </a>
+                                `;
+
+                                carousel.element.appendChild(col);
+                            }
+                        });
+
+                        // Reset position when filtering
+                        carousel.position = 0;
+                        updateCarousel(type);
+                }
+                }
+
+                // Update carousel position
+                function updateCarousel(type) {
+                    const carousel = carousels[type];
+                    const items = carousel.element.children;
+
+                    // Hide all items
+                    for (let i = 0; i < items.length; i++) {
+                        items[i].style.display = 'none';
+                    }
+
+                    // Show items for current position
+                    const startIndex = carousel.position * itemsPerView;
+                    const endIndex = Math.min(startIndex + itemsPerView, items.length);
+
+                    for (let i = startIndex; i < endIndex; i++) {
+                        if (items[i]) {
+                            items[i].style.display = 'block';
+                        }
+                    }
+
+                    // Update button states
+                    const totalItems = items.length;
+                    const maxPosition = Math.max(0, Math.ceil(totalItems / itemsPerView) - 1);
+
+                    document.querySelectorAll(`.carousel-control[data-carousel="${type}"]`).forEach(button => {
+                        if (button.classList.contains('prev')) {
+                            button.disabled = carousel.position === 0;
+                            button.style.opacity = carousel.position === 0 ? '0.5' : '1';
+                        } else if (button.classList.contains('next')) {
+                            button.disabled = carousel.position >= maxPosition;
+                            button.style.opacity = carousel.position >= maxPosition ? '0.5' : '1';
+                        }
+                    });
+                }
+
+                // Carousel navigation
+                document.querySelectorAll('.carousel-control').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const type = this.dataset.carousel;
+                        const carousel = carousels[type];
+                        const items = carousel.element.children;
+                        const maxPosition = Math.max(0, Math.ceil(items.length / itemsPerView) - 1);
+
+                        if (this.classList.contains('prev') && carousel.position > 0) {
+                            carousel.position--;
+                        } else if (this.classList.contains('next') && carousel.position < maxPosition) {
+                            carousel.position++;
+                        }
+
+                        updateCarousel(type);
+                    });
+                });
+
+                // Subject filter
+                subjectFilter.addEventListener('change', function () {
+                    loadResources(this.value);
+                });
+
+                // Initial load
+                loadResources();
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Error</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}"/>
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div class="container mt-5">
+        <div class="alert alert-danger">
+            <h4>Error</h4>
+            <p th:text="${error}">An error occurred</p>
+        </div>
+        <a th:href="@{/}" class="btn btn-primary">Return to Home</a>
+        <a th:href="@{/psychologists}" class="btn btn-secondary">Browse Psychologists</a>
+    </div>
+</body>
+</html>

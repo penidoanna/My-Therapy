@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Edit My Profile – My Therapy</title>
+        <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}">
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/6.4.0/css/all.min.css}">
+    </head>
+
+    <body class="bg-light">
+
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="container py-4" style="max-width: 700px;">
+
+            <h1 class="h4 fw-bold mb-4">Edit My Profile</h1>
+
+            <!-- Success message -->
+            <div th:if="${success}" class="alert alert-success">
+                <span th:text="${success}"></span>
+            </div>
+
+            <!-- Error message -->
+            <div th:if="${error}" class="alert alert-danger">
+                <span th:text="${error}"></span>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+
+                    <form th:action="@{/patient/profile/edit}" th:object="${patient}" method="post" class="row g-3">
+
+                        <input type="hidden" th:field="*{id}">
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">First Name</label>
+                            <input type="text" class="form-control" th:field="*{fName}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Last Name</label>
+                            <input type="text" class="form-control" th:field="*{lName}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email (cannot change)</label>
+                            <input type="email" class="form-control bg-light" th:value="${patient.email}" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone Number</label>
+                            <input type="text" class="form-control" th:field="*{phone}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Country</label>
+                            <input type="text" class="form-control" th:field="*{country}">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Notes</label>
+                            <textarea class="form-control" th:field="*{notes}" rows="3"></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                Change Password (optional)
+                            </label>
+                            <input type="password" class="form-control" th:field="*{password}" placeholder="Leave blank to keep current password">
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-between mt-3">
+                            <a th:href="@{/patient/payment-method}" class="btn btn-outline-info">
+                                <i class="fa-solid fa-credit-card me-2"></i> Manage Payment Method
+                            </a>
+                            <div>
+                                <a th:href="@{/patient/dashboard}" class="btn btn-outline-secondary me-2">Cancel</a>
+                                <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
