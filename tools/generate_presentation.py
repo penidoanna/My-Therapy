@@ -81,7 +81,6 @@ def create_placeholder_slide(prs, slide_number):
     p.font.name = FONT_NAME
     p.font.color.rgb = DARK_GRAY
     p.alignment = PP_ALIGN.CENTER
-    tf.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     return slide
 
@@ -194,7 +193,6 @@ def add_content_slide(prs, title, bullets):
     rect_p.font.name = FONT_NAME
     rect_p.font.color.rgb = RGBColor(180, 180, 180)
     rect_p.alignment = PP_ALIGN.CENTER
-    rect_tf.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     return slide
 
