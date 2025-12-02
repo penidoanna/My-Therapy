@@ -30,7 +30,8 @@ try:
     from pptx import Presentation
     from pptx.util import Inches, Pt
     from pptx.dml.color import RGBColor
-    from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+    from pptx.enum.text import PP_ALIGN
+    from pptx.enum.shapes import MSO_SHAPE
     from PIL import Image
 except ImportError as e:
     print(f"Error: Missing required library. Please install dependencies:")
@@ -175,7 +176,7 @@ def create_content_slide(prs, title, bullets):
     rect_height = Inches(4.5)
 
     shape = slide.shapes.add_shape(
-        1,  # Rectangle shape type
+        MSO_SHAPE.RECTANGLE,
         rect_left,
         rect_top,
         rect_width,
@@ -194,7 +195,6 @@ def create_content_slide(prs, title, bullets):
     para.font.name = "Calibri"
     para.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
     para.alignment = PP_ALIGN.CENTER
-    text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     return slide
 
