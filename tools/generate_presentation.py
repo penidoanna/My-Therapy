@@ -33,6 +33,7 @@ from pathlib import Path
 from PIL import Image
 from pptx import Presentation
 from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.util import Inches, Pt
 
@@ -45,6 +46,14 @@ SLIDE_HEIGHT = Inches(7.5)
 TITLE_COLOR = RGBColor(0x2E, 0x74, 0xB5)  # Professional blue
 BULLET_COLOR = RGBColor(0x33, 0x33, 0x33)  # Dark gray
 PLACEHOLDER_COLOR = RGBColor(0xE8, 0xE8, 0xE8)  # Light gray
+
+
+def validate_image_paths(image_paths):
+    """Validate that all image paths exist."""
+    for img_path in image_paths:
+        if not os.path.exists(img_path):
+            print(f"Error: Image file not found: {img_path}")
+            sys.exit(1)
 
 
 def create_full_bleed_image_slide(prs, image_path):
@@ -131,7 +140,7 @@ def create_content_slide(prs, title, bullets):
     rect_width = Inches(5.8)
     rect_height = Inches(5.4)
 
-    shape = slide.shapes.add_shape(1, rect_left, rect_top, rect_width, rect_height)  # 1 = rectangle
+    shape = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.RECTANGLE, rect_left, rect_top, rect_width, rect_height)
     shape.fill.solid()
     shape.fill.fore_color.rgb = PLACEHOLDER_COLOR
     shape.line.fill.background()  # No border
@@ -146,7 +155,6 @@ def create_content_slide(prs, title, bullets):
         p.font.name = "Calibri"
         p.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
         p.alignment = PP_ALIGN.CENTER
-        tf.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     return slide
 
@@ -157,11 +165,9 @@ def generate_presentation(image_paths, output_path):
     prs.slide_width = SLIDE_WIDTH
     prs.slide_height = SLIDE_HEIGHT
 
-    # Add 3 full-bleed image slides
+    # Validate and add 3 full-bleed image slides
+    validate_image_paths(image_paths)
     for image_path in image_paths:
-        if not os.path.exists(image_path):
-            print(f"Error: Image file not found: {image_path}")
-            sys.exit(1)
         create_full_bleed_image_slide(prs, image_path)
 
     # Define the 6 content slides
@@ -250,12 +256,8 @@ def main():
 
     args = parser.parse_args()
 
-    # Validate images exist
-    for img_path in args.images:
-        if not os.path.exists(img_path):
-            print(f"Error: Image file not found: {img_path}")
-            sys.exit(1)
-
+    # Validate images exist and generate presentation
+    validate_image_paths(args.images)
     generate_presentation(args.images, args.output)
 
 
